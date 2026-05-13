@@ -494,6 +494,11 @@ vos_obj_punch(daos_handle_t coh, daos_unit_oid_t oid, daos_epoch_t epoch,
 	if (rc != 0)
 		goto reset;
 
+	if (!(hold_flags & VOS_OBJ_CREATE) && (obj->obj_df == NULL)) {
+		rc = -DER_NONEXIST;
+		goto reset;
+	}
+
 	rc = vos_tx_begin(dth, vos_cont2umm(cont), cont->vc_pool->vp_sysdb, obj);
 	if (rc != 0)
 		goto reset;
