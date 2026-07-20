@@ -110,14 +110,23 @@ func ParseHostList(in []string, defaultPort int) (out []string, err error) {
 	out = strings.Split(set.DerangedString(), ",")
 
 	for i, host := range out {
-		hostPort := strings.Split(host, ":")
-		switch len(hostPort) {
-		case 1:
-			out[i] = fmt.Sprintf("%s:%d", host, defaultPort)
-		case 2:
-			_, err = strconv.Atoi(hostPort[1])
-		default:
-			err = errors.New("host should conform to hostname[:port]")
+		// Use net.SplitHostPort so IPv6 bracketed literals like
+		// [2a04:...]:10001 parse correctly. Falls back to default port if
+		// no port present (use the unbracketed host to avoid double-bracketing).
+		h, p, splitErr := net.SplitHostPort(host)
+		if splitErr != nil {
+			// Likely missing port. Re-split with a dummy port to recover the
+			// bare host, then rejoin so an already-bracketed IPv6 literal is
+			// not double-bracketed ([[2001:db8::1]]:port) by JoinHostPort.
+			if h2, _, splitErr2 := net.SplitHostPort(host + ":0"); splitErr2 != nil {
+				err = errors.New("host should conform to hostname[:port]")
+			} else {
+				out[i] = net.JoinHostPort(h2, fmt.Sprintf("%d", defaultPort))
+			}
+		} else if _, atoiErr := strconv.Atoi(p); atoiErr != nil {
+			err = atoiErr
+		} else {
+			out[i] = net.JoinHostPort(h, p)
 		}
 
 		if err != nil {

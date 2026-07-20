@@ -846,6 +846,9 @@ crt_hg_class_init(crt_provider_t provider, int ctx_idx, bool primary, int iface_
 
 	init_info.na_init_info.auth_key = prov_data->cpg_na_config.noc_auth_key;
 
+	/* Optional NA address family hint (D_ADDR_FORMAT). 0=NA_ADDR_UNSPEC (default). */
+	init_info.na_init_info.addr_format = crt_gdata.cg_na_addr_format;
+
 	if (crt_provider_is_block_mode(provider) && !crt_gdata.cg_progress_busy)
 		init_info.na_init_info.progress_mode = 0;
 	else

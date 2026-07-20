@@ -158,9 +158,9 @@ def scons():
     denv.d_add_rpaths("..", True, True)
     denv.require('protobufc')
     denv.AppendENVPath("CGO_CFLAGS", denv.subst("$_CPPINCFLAGS"), sep=" ")
+    install_go_bin(denv, "daos_agent")
+    install_go_bin(denv, "dmg", install_man=True)
     if prereqs.client_requested():
-        install_go_bin(denv, "daos_agent")
-        install_go_bin(denv, "dmg", install_man=True)
         if prereqs.test_requested():
             install_go_bin(denv, "hello_drpc")
 
@@ -211,7 +211,7 @@ def scons():
                             "-L$ISAL_CRYPTO_PREFIX/lib64 $_RPATH")
     # Explicitly link RTE & SPDK libs for CGO access
     ldopts = cgolibdirs + " -lspdk_env_dpdk -lspdk_nvme -lspdk_vmd -lrte_mempool" + \
-        " -lrte_mempool_ring -lrte_bus_pci -lnvme_control -lisal -lssl -lnuma -ldl"
+        " -lrte_mempool_ring -lrte_bus_pci -lnvme_control -lisal -lssl -lnuma -ldl -laio"
     aenv.AppendENVPath("CGO_LDFLAGS", ldopts, sep=" ")
 
     aenv.AppendENVPath("CGO_CFLAGS", aenv.subst("$_CPPINCFLAGS"), sep=" ")

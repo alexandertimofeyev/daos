@@ -182,6 +182,9 @@ struct crt_gdata {
 	uint32_t                 cg_bulk_quota;
 	/** Retry count of HG_Init_opt2() on failure when using CXI provider */
 	uint32_t                 cg_hg_init_retry_cnt;
+
+	/** NA address family hint from D_ADDR_FORMAT (0=UNSPEC,1=IPv4,2=IPv6,3=NATIVE) */
+	int                      cg_na_addr_format;
 };
 
 extern struct crt_gdata		crt_gdata;
@@ -222,6 +225,7 @@ struct crt_event_cb_priv {
 	ENV_STR(D_CLIENT_METRICS_DUMP_DIR)                                                         \
 	ENV(D_CLIENT_METRICS_ENABLE)                                                               \
 	ENV(D_CLIENT_METRICS_RETAIN)                                                               \
+	ENV_STR(D_ADDR_FORMAT)                                                                     \
 	ENV_STR(D_DOMAIN)                                                                          \
 	ENV_STR(D_FI_CONFIG)                                                                       \
 	ENV_STR(D_INTERFACE)                                                                       \

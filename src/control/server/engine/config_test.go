@@ -598,7 +598,17 @@ func TestConfig_FabricValidation(t *testing.T) {
 				Provider:      multiProviderString("foo", "bar"),
 				Interface:     multiProviderString("baz", "net"),
 				InterfacePort: 42,
+				AddrFormat:    "ipv6",
 			},
+		},
+		"multi provider address format rejected": {
+			cfg: FabricConfig{
+				Provider:      multiProviderString("foo", "bar"),
+				Interface:     multiProviderString("baz", "net"),
+				InterfacePort: 42,
+				AddrFormat:    multiProviderString("ipv6", "ipv4"),
+			},
+			expErr: errors.New("invalid addr_format"),
 		},
 		"mismatched num providers": {
 			cfg: FabricConfig{
@@ -693,6 +703,7 @@ func TestConfig_ToCmdVals(t *testing.T) {
 		WithFabricProvider(provider).
 		WithFabricInterface(interfaceName).
 		WithFabricInterfacePort(interfacePort).
+		WithFabricAddrFormat("ipv6").
 		WithPinnedNumaNode(pinnedNumaNode).
 		WithBypassHealthChk(&bypass).
 		WithModules(modules).
@@ -727,6 +738,7 @@ func TestConfig_ToCmdVals(t *testing.T) {
 		"D_INTERFACE=" + interfaceName,
 		"D_PORT=" + strconv.Itoa(interfacePort),
 		"D_PROVIDER=" + provider,
+		"D_ADDR_FORMAT=ipv6",
 		"D_LOG_FILE=" + logFile,
 		"D_LOG_MASK=" + logMask,
 		"CRT_TIMEOUT=" + strconv.FormatUint(uint64(crtTimeout), 10),

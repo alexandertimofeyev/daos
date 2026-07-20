@@ -683,6 +683,27 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 
 	crt_env_get(D_PORT_AUTO_ADJUST, &port_auto_adjust);
 
+	{
+		char *addr_format_env = NULL;
+
+		/* D_ADDR_FORMAT: hint mercury/libfabric on NA address family. */
+		crt_env_get(D_ADDR_FORMAT, &addr_format_env);
+		if (addr_format_env != NULL && *addr_format_env != '\0') {
+			if (!strcasecmp(addr_format_env, "ipv6"))
+				crt_gdata.cg_na_addr_format = 2; /* NA_ADDR_IPV6 */
+			else if (!strcasecmp(addr_format_env, "ipv4"))
+				crt_gdata.cg_na_addr_format = 1; /* NA_ADDR_IPV4 */
+			else if (!strcasecmp(addr_format_env, "native"))
+				crt_gdata.cg_na_addr_format = 3; /* NA_ADDR_NATIVE */
+			else if (!strcasecmp(addr_format_env, "unspec"))
+				crt_gdata.cg_na_addr_format = 0; /* NA_ADDR_UNSPEC */
+			else
+				D_WARN("D_ADDR_FORMAT=%s unrecognized; using UNSPEC\n", addr_format_env);
+			D_INFO("D_ADDR_FORMAT=%s -> na_addr_format=%d\n",
+			       addr_format_env, crt_gdata.cg_na_addr_format);
+		}
+	}
+
 	/* TODO kept as unique globals but may want to distinguish for multi-provider case */
 	CRT_ENV_OPT_GET(opt, thread_mode_single, D_THREAD_MODE_SINGLE);
 	crt_gdata.cg_thread_mode_single = thread_mode_single;

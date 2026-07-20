@@ -147,11 +147,11 @@ def generate(env):
     # that allow it to download and use a newer version as required to meet the requirements
     # defined in go.mod.
     if 'GOTOOLCHAIN' not in env['ENV']:
-        env['ENV']['GOTOOLCHAIN'] = 'auto'
+        env['ENV']['GOTOOLCHAIN'] = 'local'
     if 'GOSUMDB' not in env['ENV']:
-        env['ENV']['GOSUMDB'] = 'sum.golang.org'
+        env['ENV']['GOSUMDB'] = 'off'
     if 'GOPROXY' not in env['ENV']:
-        env['ENV']['GOPROXY'] = 'https://proxy.golang.org,direct'
+        env['ENV']['GOPROXY'] = 'off'
 
     env.Append(SCANNERS=Scanner(function=_scan_go_file, skeys=['.go']))
 

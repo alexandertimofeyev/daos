@@ -48,7 +48,17 @@ type FabricConfig struct {
 	NumSecondaryEndpoints []int  `yaml:"secondary_provider_endpoints,omitempty" cmdLongFlag:"--nr_sec_ctx,nonzero" cmdShortFlag:"-S,nonzero"`
 	DisableSRX            bool   `yaml:"disable_srx,omitempty" cmdEnv:"FI_OFI_RXM_USE_SRX,invertBool,intBool"`
 	AuthKey               string `yaml:"fabric_auth_key,omitempty" cmdEnv:"D_PROVIDER_AUTH_KEY"`
+	// AddrFormat selects the preferred IP address family for fabric init. It is
+	// forwarded verbatim to CaRT/Mercury via the D_ADDR_FORMAT environment
+	// variable. An empty value leaves the historical (IPv4-preferring) default
+	// untouched. The same scalar value applies to every provider in a
+	// multi-provider configuration.
+	AddrFormat string `yaml:"addr_format,omitempty" cmdEnv:"D_ADDR_FORMAT"`
 }
+
+// FabricAddrFormats enumerates the address-family hints accepted by addr_format,
+// matching the scalar D_ADDR_FORMAT values parsed by CaRT.
+var FabricAddrFormats = []string{"unspec", "ipv4", "ipv6", "native"}
 
 // GetPrimaryProvider parses the primary provider from the Provider string.
 func (fc *FabricConfig) GetPrimaryProvider() (string, error) {
@@ -157,6 +167,9 @@ func (fc *FabricConfig) Update(other FabricConfig) {
 	if fc.AuthKey == "" {
 		fc.AuthKey = other.AuthKey
 	}
+	if fc.AddrFormat == "" {
+		fc.AddrFormat = other.AddrFormat
+	}
 	if len(fc.NumSecondaryEndpoints) == 0 {
 		fc.setNumSecondaryEndpoints(other.NumSecondaryEndpoints)
 	}
@@ -200,6 +213,10 @@ func (fc *FabricConfig) Validate() error {
 		return errors.Errorf("provider, fabric_iface and fabric_iface_port must include the same number of items delimited by %q", MultiProviderSeparator)
 	}
 
+	if err := fc.validateAddrFormat(); err != nil {
+		return err
+	}
+
 	numSecProv := numProv - numPrimaryProviders
 	if numSecProv > 0 {
 		if len(fc.NumSecondaryEndpoints) != 0 && len(fc.NumSecondaryEndpoints) != numSecProv {
@@ -211,6 +228,21 @@ func (fc *FabricConfig) Validate() error {
 				return errors.Errorf("all values in secondary_provider_endpoints must be > 0")
 			}
 		}
+	}
+
+	return nil
+}
+
+// validateAddrFormat ensures addr_format is a scalar value understood by CaRT.
+// An empty value preserves the default behavior.
+func (fc *FabricConfig) validateAddrFormat() error {
+	if fc.AddrFormat == "" {
+		return nil
+	}
+
+	if !common.Includes(FabricAddrFormats, fc.AddrFormat) {
+		return errors.Errorf("invalid addr_format %q, must be one of %v",
+			fc.AddrFormat, FabricAddrFormats)
 	}
 
 	return nil
@@ -702,6 +734,14 @@ func (c *Config) WithFabricInterfacePort(ifacePort int) *Config {
 // WithFabricAuthKey sets the fabric authorization key.
 func (c *Config) WithFabricAuthKey(key string) *Config {
 	c.Fabric.AuthKey = key
+	return c
+}
+
+// WithFabricAddrFormat sets the preferred IP address family for fabric init
+// (forwarded to CaRT/Mercury as D_ADDR_FORMAT). Accepted values are listed in
+// FabricAddrFormats; an empty value preserves the default behavior.
+func (c *Config) WithFabricAddrFormat(format string) *Config {
+	c.Fabric.AddrFormat = format
 	return c
 }
 
